@@ -1,0 +1,1474 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attestation Integrity Report &middot; __LOG_SOURCE__</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1420;
+      --bg2: #111b2a;
+      --surf: #152232;
+      --surf2: #1b2a3d;
+      --line: rgba(150, 180, 220, .12);
+      --line2: rgba(150, 180, 220, .20);
+      --ink: #eaf1fa;
+      --muted: #8ba0ba;
+      --faint: #61748f;
+      --miss: #35c2b0;
+      /* next slot missed */
+      --late: #5aa9f0;
+      /* head event late  */
+      --lateinc: #ecc94b;
+      /* included late     */
+      --nosub: #f5893d;
+      /* not submitted     */
+      --other: #ef4d55;
+      /* unknown           */
+      --flagS: #9b8cff;
+      /* source vote badge */
+      --ok: #4bd6a0;
+      --shadow: 0 1px 0 rgba(255, 255, 255, .03) inset, 0 8px 30px rgba(0, 0, 0, .35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(155, 140, 255, .10), transparent 60%),
+        radial-gradient(900px 500px at -5% 0%, rgba(53, 194, 176, .08), transparent 55%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    /* ---------------- hero ---------------- */
+    header.hero {
+      padding: 64px 0 30px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .hero-copy {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .logo {
+      flex: 0 0 auto;
+      display: block;
+      height: 200px;
+      width: auto;
+      filter: drop-shadow(0 10px 34px rgba(53, 194, 176, .30));
+    }
+
+    @media (max-width:820px) {
+      header.hero {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        gap: 24px;
+      }
+
+      .logo {
+        height: 120px;
+      }
+    }
+
+    .eyebrow {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow b {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    h1 {
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 600;
+      font-size: clamp(34px, 5.4vw, 62px);
+      line-height: 1.02;
+      letter-spacing: -.02em;
+      margin: 22px 0 0;
+    }
+
+    h1 .accent {
+      background: linear-gradient(92deg, var(--late), var(--miss));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .lede {
+      max-width: 60ch;
+      color: var(--muted);
+      margin: 18px 0 0;
+      font-size: 16px;
+    }
+
+    .lede b {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* ---------------- kpi strip ---------------- */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 38px 0 0;
+      box-shadow: var(--shadow);
+    }
+
+    .kpi {
+      background: linear-gradient(180deg, var(--surf), var(--bg2));
+      padding: 22px 22px 20px;
+    }
+
+    .kpi .n {
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 600;
+      font-size: 34px;
+      letter-spacing: -.02em;
+      line-height: 1;
+    }
+
+    .kpi .l {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11.5px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .kpi .s {
+      font-size: 12.5px;
+      color: var(--faint);
+      margin-top: 4px;
+    }
+
+    /* ---------------- reason breakdown ---------------- */
+    section {
+      padding: 52px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .sec-head h2 {
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 600;
+      font-size: 22px;
+      margin: 0;
+      letter-spacing: -.01em;
+    }
+
+    .sec-head .tag {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+
+    .reasonbar {
+      display: flex;
+      height: 16px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--line2);
+    }
+
+    .reasonbar>span {
+      display: block;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .rcard {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px 16px 15px;
+      background: linear-gradient(180deg, var(--surf), var(--bg2));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rcard::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--c);
+    }
+
+    .rcard .rt {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 600;
+      font-size: 14.5px;
+    }
+
+    .rcard .dot {
+      flex: 0 0 auto;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--c);
+      box-shadow: 0 0 12px var(--c);
+    }
+
+    .rcard .rn {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .rcard .rn small {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 400;
+      margin-left: 6px;
+    }
+
+    .rcard .rd {
+      font-size: 12.7px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+
+    /* ---------------- controls ---------------- */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .chip {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      letter-spacing: .03em;
+      padding: 7px 13px;
+      border-radius: 999px;
+      border: 1px solid var(--line2);
+      background: var(--surf);
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: .15s;
+    }
+
+    .chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--c, var(--muted));
+    }
+
+    .chip[aria-pressed="true"] {
+      color: var(--ink);
+      border-color: var(--c, var(--line2));
+      background: color-mix(in srgb, var(--c, #888) 16%, var(--surf));
+    }
+
+    .chip:hover {
+      color: var(--ink);
+    }
+
+    input.search {
+      flex: 1;
+      min-width: 200px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 13px;
+      padding: 9px 13px;
+      background: var(--surf);
+      border: 1px solid var(--line2);
+      border-radius: 10px;
+      color: var(--ink);
+    }
+
+    input.search::placeholder {
+      color: var(--faint);
+    }
+
+    input.search:focus,
+    .chip:focus-visible,
+    th[data-sort]:focus-visible {
+      outline: 2px solid var(--late);
+      outline-offset: 2px;
+    }
+
+    .count {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* ---------------- table ---------------- */
+    .tablewrap {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--bg2);
+      text-align: left;
+      padding: 13px 14px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line2);
+      white-space: nowrap;
+    }
+
+    th[data-sort] {
+      cursor: pointer;
+    }
+
+    th[data-sort]:hover {
+      color: var(--ink);
+    }
+
+    th .ar {
+      opacity: .4;
+      margin-left: 5px;
+    }
+
+    tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr.row {
+      cursor: pointer;
+      transition: background .12s;
+    }
+
+    tbody tr.row:hover {
+      background: rgba(150, 180, 220, .05);
+    }
+
+    .slotcell {
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 500;
+    }
+
+    .slotlink {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted var(--line2);
+      transition: color .12s, border-color .12s;
+    }
+
+    .slotlink:hover,
+    .vgroup:hover .slotlink {
+      color: var(--late);
+      border-bottom-color: var(--late);
+    }
+
+    .stime {
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 400;
+      margin-top: 3px;
+    }
+
+    .vidx {
+      color: var(--faint);
+      font-size: 11.5px;
+      margin-top: 3px;
+    }
+
+    .epoch {
+      color: var(--faint);
+      font-size: 12px;
+    }
+
+    .flags {
+      display: inline-flex;
+      gap: 5px;
+    }
+
+    .flag {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10.5px;
+      font-weight: 600;
+      width: 20px;
+      text-align: center;
+      padding: 3px 0;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #141414;
+    }
+
+    /* correct vote = solid fill in the letter's colour */
+    .flag.ok.H { background: var(--miss); }
+    .flag.ok.T { background: var(--late); }
+    .flag.ok.S { background: var(--flagS); }
+
+    /* wrong / missing vote = outline only, no fill */
+    .flag.bad.H { border-color: var(--miss); color: var(--miss); }
+    .flag.bad.T { border-color: var(--late); color: var(--late); }
+    .flag.bad.S { border-color: var(--flagS); color: var(--flagS); }
+
+    .rpill {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+      color: var(--c);
+      background: color-mix(in srgb, var(--c) 12%, transparent);
+    }
+
+    /* timing strip: green up to the 4s deadline (33.33% of the 12s slot), blue after.
+       Hairline ticks at 4s (33.33%) and 8s (66.67%) so the scale is readable without an axis. */
+    .strip {
+      position: relative;
+      height: 22px;
+      width: 210px;
+      background:
+        linear-gradient(to right, transparent 0 69px, rgba(150, 180, 220, .55) 69px 71px, transparent 71px 100%),
+        linear-gradient(to right, transparent 0 139px, rgba(150, 180, 220, .55) 139px 141px, transparent 141px 100%),
+        linear-gradient(to right,
+          color-mix(in srgb, var(--ok) 16%, var(--bg)) 0 33.333%,
+          color-mix(in srgb, var(--late) 16%, var(--bg)) 33.333% 100%);
+      border: 1px solid var(--line2);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    /* 4s / 8s scale labels, centred under their tick, outside the clipped strip */
+    .stripwrap {
+      position: relative;
+      width: 210px;
+      padding-bottom: 13px;
+    }
+
+    .stripwrap::before,
+    .stripwrap::after {
+      position: absolute;
+      bottom: 0;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1;
+      color: var(--ink);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .stripwrap::before {
+      content: '4s';
+      left: 33.333%;
+    }
+
+    .stripwrap::after {
+      content: '8s';
+      left: 66.667%;
+    }
+
+    .stripwrap.na {
+      padding-bottom: 0;
+    }
+
+    .stripwrap.na::before,
+    .stripwrap.na::after {
+      content: none;
+    }
+
+    .strip .fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      background: rgba(150, 180, 220, .06);
+    }
+
+    .strip .head {
+      position: absolute;
+      top: 50%;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: #dfe8f4;
+      border: 1.5px solid var(--bg);
+    }
+
+    .strip .head.late {
+      background: var(--late);
+    }
+
+    .strip .attest {
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      width: 2.5px;
+      background: var(--ink);
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+
+    .strip.na {
+      background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(150, 180, 220, .06) 5px, rgba(150, 180, 220, .06) 10px);
+    }
+
+    /* detail row */
+    tr.detail td {
+      background: var(--bg2);
+      padding: 0;
+      border-bottom: 1px solid var(--line2);
+    }
+
+    .detail-inner {
+      padding: 18px 22px 22px;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 26px;
+    }
+
+    .detail-inner .dnote {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .detail-inner .dnote .why {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 6px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px 18px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12.5px;
+      align-content: start;
+    }
+
+    .kv dt {
+      color: var(--muted);
+    }
+
+    .kv dd {
+      margin: 0;
+      color: var(--ink);
+      word-break: break-all;
+    }
+
+    .legend-strip {
+      margin-top: 14px;
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .legend-strip i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      margin-right: 6px;
+      vertical-align: -1px;
+    }
+
+    /* same 2.5px vertical bar as .strip .attest, so the key matches the mark */
+    .legend-strip i.vbar {
+      width: 2.5px;
+      height: 14px;
+      margin-left: 4px;
+      margin-right: 10px;
+      vertical-align: -4px;
+    }
+
+    /* ---------------- histogram (slot in epoch) ---------------- */
+    .histwrap {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 26px 26px 16px;
+      background: linear-gradient(180deg, var(--surf), var(--bg2));
+      box-shadow: var(--shadow);
+    }
+
+    .histplot {
+      position: relative;
+      height: 260px;
+      padding-left: 36px;
+    }
+
+    .histyaxis {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 30px;
+    }
+
+    .histyaxis .ytick {
+      position: absolute;
+      right: 8px;
+      transform: translateY(50%);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+      line-height: 1;
+      color: var(--faint);
+    }
+
+    .histgrid {
+      position: absolute;
+      left: 36px;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      pointer-events: none;
+    }
+
+    .histgrid .gline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .histogram {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(32, 1fr);
+      gap: 4px;
+      align-items: end;
+      height: 100%;
+    }
+
+    .hcol {
+      position: relative;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .hcol::after {
+      content: attr(data-slot);
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -22px;
+      text-align: center;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+      color: var(--faint);
+    }
+
+    .hbar {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column-reverse;
+      border-radius: 3px 3px 0 0;
+      overflow: hidden;
+      transition: opacity .12s;
+    }
+
+    .hcol:hover .hbar {
+      opacity: .85;
+    }
+
+    .hseg {
+      width: 100%;
+      flex: 0 0 auto;
+    }
+
+    .hcount {
+      position: absolute;
+      top: -16px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .histaxis {
+      margin-top: 30px;
+      text-align: center;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+
+    footer {
+      padding: 40px 0 70px;
+      color: var(--faint);
+      font-size: 12.5px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .empty {
+      padding: 50px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    @media (max-width:820px) {
+      .kpis {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .detail-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .hide-sm {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      * {
+        transition: none !important;
+      }
+
+      html {
+        scroll-behavior: auto;
+      }
+    }
+
+    /* ---------------- accountability: unavoidable group ---------------- */
+    .adjust {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 18px 0 0;
+    }
+
+    .toggle {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12.5px;
+      padding: 9px 15px;
+      border-radius: 10px;
+      border: 1px solid var(--line2);
+      background: var(--surf);
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: .15s;
+    }
+
+    .toggle:hover {
+      color: var(--ink);
+    }
+
+    .toggle:focus-visible {
+      outline: 2px solid var(--miss);
+      outline-offset: 2px;
+    }
+
+    .toggle .sw {
+      width: 32px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--line2);
+      position: relative;
+      flex: 0 0 auto;
+      transition: .15s;
+    }
+
+    .toggle .sw::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #dfe8f4;
+      transition: .15s;
+    }
+
+    .toggle[aria-pressed="true"] {
+      color: var(--ink);
+      border-color: color-mix(in srgb, var(--miss) 55%, transparent);
+      background: color-mix(in srgb, var(--miss) 12%, var(--surf));
+    }
+
+    .toggle[aria-pressed="true"] .sw {
+      background: var(--miss);
+    }
+
+    .toggle[aria-pressed="true"] .sw::after {
+      left: 16px;
+    }
+
+    .adjust-note {
+      font-size: 12.5px;
+      color: var(--miss);
+      max-width: 62ch;
+      line-height: 1.4;
+    }
+
+    /* vertical bar separating the unavoidable group from the rest */
+    .vbar {
+      width: 1px;
+      align-self: stretch;
+      background: var(--line2);
+      margin: 0 5px;
+    }
+
+    .reasonbar .barsep {
+      width: 4px;
+      flex: 0 0 auto;
+      background: var(--bg);
+    }
+
+    .badge-unavoid {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 9.5px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--miss);
+      border: 1px solid color-mix(in srgb, var(--miss) 45%, transparent);
+      border-radius: 999px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+
+    /* sits on its own line under the reason title, aligned with the label text */
+    .rcard .badge-unavoid {
+      display: inline-block;
+      margin-top: 7px;
+      margin-left: 18px;
+    }
+
+    .rcard.unavoid {
+      border-style: dashed;
+    }
+
+    .excluded {
+      opacity: .4;
+      filter: grayscale(.4);
+      transition: opacity .15s;
+    }
+
+    /* privacy: blur validator identifiers until hovered */
+    body.blur-ids .blurable {
+      filter: blur(5px);
+      transition: filter .12s;
+      cursor: default;
+    }
+
+    body.blur-ids .blurable:hover {
+      filter: none;
+    }
+    /* celebration overlay: only ever drawn on a flawless run */
+    #fireworks {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 90;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="fireworks" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">
+          <span>Validator client &middot; active-active</span>
+          <span>log <b>__LOG_SOURCE__</b></span>
+          <span>__SPAN__</span>
+        </div>
+        <h1>Every attestation that<br>missed <span class="accent">perfect</span>.</h1>
+        <p class="lede">Of <b>__TOTAL__</b> attestations recorded, <b>__IMPERFECT__</b> were not perfect:
+          the head, target, or source vote was wrong. This report classifies each one by the
+          reason it fell short, resolving missed-slot facts against a live beacon node.</p>
+      </div>
+      <img class="logo" src="__LOGO__" alt="logo" width="215" height="256">
+    </header>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="n" id="kpiPerfect">__PERFECT_PCT__%</div>
+        <div class="l">Perfect rate</div>
+        <div class="s" id="kpiPerfectSub">head + target + source correct</div>
+      </div>
+      <div class="kpi">
+        <div class="n" id="kpiImperfect">__IMPERFECT__</div>
+        <div class="l">Imperfect</div>
+        <div class="s" id="kpiImperfectSub">__IMPERFECT_PCT__% of all attestations</div>
+      </div>
+      <div class="kpi">
+        <div class="n">__HEAD_FALSE__</div>
+        <div class="l">Wrong head</div>
+        <div class="s">dominant failure mode</div>
+      </div>
+      <div class="kpi">
+        <div class="n">__TARGET_FALSE__<span style="font-size:16px;color:var(--muted)"> / __SOURCE_FALSE__</span></div>
+        <div class="l">Wrong target / source</div>
+        <div class="s">epoch &amp; justification votes</div>
+      </div>
+    </div>
+
+    <div class="adjust">
+      <button id="excludeBtn" class="toggle" aria-pressed="false"><span class="sw"></span>Exclude unavoidable
+        (next-slot-missed)</button>
+      <button id="blurBtn" class="toggle" aria-pressed="false"><span class="sw"></span>Blur validator
+        identifiers</button>
+      <span class="adjust-note" id="adjustNote"></span>
+    </div>
+
+    <section>
+      <div class="sec-head">
+        <h2>Why they failed</h2><span class="tag">root-cause breakdown</span>
+      </div>
+      <div class="reasonbar" id="reasonbar"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>When they failed</h2><span class="tag">slot in epoch &middot; stacked by reason</span>
+      </div>
+      <div class="histwrap">
+        <div class="histplot">
+          <div class="histyaxis" id="histyaxis"></div>
+          <div class="histgrid" id="histgrid"></div>
+          <div class="histogram" id="histogram"></div>
+        </div>
+        <div class="histaxis">slot in epoch</div>
+        <div class="legend-strip" id="histlegend" style="justify-content:center"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>The ledger</h2><span class="tag">every imperfect attestation</span>
+      </div>
+      <div class="controls" id="chips"></div>
+      <div class="controls">
+        <input class="search" id="search" type="search" placeholder="filter by slot, epoch or validator pubkey…"
+          aria-label="search">
+        <span class="count" id="count"></span>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="epoch" tabindex="0">Epoch <span class="ar"></span></th>
+              <th data-sort="slot" tabindex="0">Slot <span class="ar"></span></th>
+              <th class="hide-sm">Validator</th>
+              <th title="Source / Target / Head vote. Filled = correct, outline = wrong or missing.">S&middot;T&middot;H</th>
+              <th>Slot timeline (0&ndash;12s)</th>
+              <th data-sort="reason" tabindex="0">Reason <span class="ar"></span></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="legend-strip">
+        <span><i style="background:#dfe8f4;border-radius:50%"></i>head event (in time)</span>
+        <span><i style="background:var(--late);border-radius:50%"></i>head event (late)</span>
+        <span><i class="vbar" style="background:var(--ink)"></i>attested</span>
+      </div>
+    </section>
+
+    <footer>
+      Generated from <b>__LOG_SOURCE__</b> &middot; missed-slot facts via <b>__BEACON_URL__</b> &middot;
+      perfect = correctlyVotedHead &amp;&amp; correctlyVotedTarget &amp;&amp; correctlyVotedSource.
+    </footer>
+  </div>
+
+  <script id="data" type="application/json">__PAYLOAD__</script>
+  <script>
+    const DATA = JSON.parse(document.getElementById('data').textContent);
+    const REASONS = {
+      next_slot_missed: { label: 'Next slot missed', c: 'var(--miss)', hex: '#35c2b0', unavoidable: true, desc: 'Another proposer missed block N+1, so the attestation could not be included at delay 1. Nothing the client could do.' },
+      no_head_event_in_deadline: { label: 'Head event late (>4s)', c: 'var(--late)', hex: '#5aa9f0', desc: 'No head event arrived within the 4s deadline, so the validator attested the parent block as head.' },
+      late_inclusion: { label: 'Included late', c: 'var(--lateinc)', hex: '#ecc94b', desc: 'The head vote was right, but the proposer of N+1 left the attestation out. Timely head needs a delay of exactly one slot.' },
+      not_submitted: { label: 'Not submitted', c: 'var(--nosub)', hex: '#f5893d', desc: 'The attestation was never produced. Head, target and source all count as missed.' },
+      other: { label: 'Unknown', c: 'var(--other)', hex: '#ef4d55', desc: 'Head arrived in time and slot N+1 exists: the voted block was re-orged out, or a cause the logs do not show.' },
+    };
+    /* client-attributable reasons first, then a divider, then the unavoidable one */
+    const ORDER = ['other', 'not_submitted', 'late_inclusion', 'no_head_event_in_deadline', 'next_slot_missed'];
+    const isUnavoid = k => !!REASONS[k].unavoidable;
+    const recs = DATA.records;
+
+    /* reason bar + legend */
+    const counts = {}; ORDER.forEach(k => counts[k] = 0);
+    recs.forEach(r => counts[r.reason] = (counts[r.reason] || 0) + 1);
+    const total = recs.length;
+    const bar = document.getElementById('reasonbar');
+    const legend = document.getElementById('legend');
+    let barDiv = false;
+    ORDER.forEach(k => {
+      if (!counts[k]) return;
+      if (isUnavoid(k) && !barDiv) { const g = document.createElement('span'); g.className = 'barsep'; bar.appendChild(g); barDiv = true; }
+      const seg = document.createElement('span');
+      seg.dataset.reason = k;
+      seg.style.width = (100 * counts[k] / total) + '%'; seg.style.background = REASONS[k].hex;
+      seg.title = REASONS[k].label + ': ' + counts[k]; bar.appendChild(seg);
+    });
+    ORDER.forEach(k => {
+      const R = REASONS[k]; const pct = total ? Math.round(1000 * counts[k] / total) / 10 : 0;
+      const el = document.createElement('div'); el.className = 'rcard' + (isUnavoid(k) ? ' unavoid' : '');
+      el.dataset.reason = k; el.style.setProperty('--c', R.hex);
+      const badge = isUnavoid(k) ? '<span class="badge-unavoid" title="A different validator missed the next slot; nothing the client could do.">outside our control</span>' : '';
+      el.innerHTML = `<div class="rt"><span class="dot"></span>${R.label}</div>
+    ${badge}
+    <div class="rn">${counts[k].toLocaleString()}<small>${pct}%</small></div>
+    <div class="rd">${R.desc}</div>`;
+      legend.appendChild(el);
+    });
+
+    /* filter chips (vertical bar before the unavoidable group) */
+    const active = new Set(ORDER);
+    const chips = document.getElementById('chips');
+    let chipDiv = false;
+    ORDER.forEach(k => {
+      if (isUnavoid(k) && !chipDiv) { const v = document.createElement('span'); v.className = 'vbar'; chips.appendChild(v); chipDiv = true; }
+      const R = REASONS[k]; const c = document.createElement('button');
+      c.className = 'chip'; c.setAttribute('aria-pressed', 'true'); c.style.setProperty('--c', R.hex);
+      c.innerHTML = `<span class="dot"></span>${R.label} <b style="color:var(--muted)">${counts[k] || 0}</b>`;
+      c.onclick = () => {
+        if (active.has(k)) { active.delete(k); c.setAttribute('aria-pressed', 'false'); }
+        else { active.add(k); c.setAttribute('aria-pressed', 'true'); } render();
+      };
+      chips.appendChild(c);
+    });
+
+    /* accountability toggle: drop the unavoidable next-slot-missed from the headline metrics */
+    const TOT = DATA.stats.total_attestations;
+    const IMP = recs.length;
+    const NSM = counts['next_slot_missed'] || 0;
+    const fmtPct = v => (Math.round(v * 1000) / 1000).toFixed(3).replace(/\.?0+$/, '');
+    const kpiPerfect = document.getElementById('kpiPerfect');
+    const kpiPerfectSub = document.getElementById('kpiPerfectSub');
+    const kpiImperfect = document.getElementById('kpiImperfect');
+    const kpiImperfectSub = document.getElementById('kpiImperfectSub');
+    const excludeBtn = document.getElementById('excludeBtn');
+    const adjustNote = document.getElementById('adjustNote');
+    let excluded = false;
+    function applyAccountability() {
+      const imp = excluded ? IMP - NSM : IMP;
+      const perf = TOT - imp;
+      kpiPerfect.textContent = fmtPct(100 * perf / TOT) + '%';
+      kpiImperfect.textContent = imp.toLocaleString();
+      kpiImperfectSub.textContent = fmtPct(100 * imp / TOT) + '% of all attestations';
+      kpiPerfectSub.textContent = excluded ? 'excl. ' + NSM.toLocaleString() + ' unavoidable misses' : 'head + target + source correct';
+      excludeBtn.setAttribute('aria-pressed', excluded ? 'true' : 'false');
+      adjustNote.textContent = excluded
+        ? 'Next-slot-missed (' + NSM.toLocaleString() + ') excluded: a different proposer missed slot N+1, which the client cannot control.'
+        : '';
+      document.querySelectorAll('[data-reason="next_slot_missed"]').forEach(el => el.classList.toggle('excluded', excluded));
+    }
+    excludeBtn.onclick = () => { excluded = !excluded; applyAccountability(); renderHistogram(); };
+    applyAccountability();
+
+    /* privacy toggle: blur validator pubkeys and indexes (hover to reveal) */
+    const blurBtn = document.getElementById('blurBtn');
+    let blurred = false;
+    blurBtn.onclick = () => {
+      blurred = !blurred;
+      document.body.classList.toggle('blur-ids', blurred);
+      blurBtn.setAttribute('aria-pressed', blurred ? 'true' : 'false');
+    };
+
+    /* table */
+    const tbody = document.getElementById('tbody');
+    const countEl = document.getElementById('count');
+    const searchEl = document.getElementById('search');
+    let sortKey = 'epoch', sortDir = 1;
+    const flag = (name, ok) => `<span class="flag ${name} ${ok ? 'ok' : 'bad'}" title="${name} ${ok ? 'correct' : 'WRONG'}">${name}</span>`;
+
+    /* explorer link to the slot's attestations on beaconcha.in */
+    const BEACONCHAIN = 'https://beaconcha.in';
+    const slotLink = slot => `<a class="slotlink" href="${BEACONCHAIN}/slot/${slot}#attestations" target="_blank" rel="noopener" title="View slot ${slot} on beaconcha.in" onclick="event.stopPropagation()">${slot}</a>`;
+    const VIDX = DATA.stats.validator_index || {};
+    const pubkeyCell = pk => {
+      if (!pk) return '-';
+      const idx = VIDX[pk];
+      if (!idx) return `<span class="blurable">${pk}</span>`;
+      const href = `${BEACONCHAIN}/validator/${idx}#attestations`;
+      const link = txt => `<a class="slotlink" href="${href}" target="_blank" rel="noopener" title="Validator ${idx} attestations on beaconcha.in" onclick="event.stopPropagation()">${txt}</a>`;
+      return `<span class="vgroup blurable">${link(pk)}<div class="vidx">${link(idx)}</div></span>`;
+    };
+
+    /* slot wall-clock time (UTC): mainnet genesis + 12s * slot */
+    const GENESIS = 1606824023, SECS_PER_SLOT = 12;
+    const pad = n => String(n).padStart(2, '0');
+    function slotTime(slot) {
+      const d = new Date((GENESIS + SECS_PER_SLOT * slot) * 1000);
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}Z`;
+    }
+
+    function strip(r) {
+      if (r.slot == null) return '<div class="stripwrap na"><div class="strip na" title="no slot"></div></div>';
+      const W = 12, pct = x => Math.max(0, Math.min(100, 100 * x / W));
+      let h = '';
+      if (r.first_head_offset != null && r.first_head_offset >= 0 && r.first_head_offset <= W) {
+        const late = r.first_head_offset > 4;
+        h += `<div class="head ${late ? 'late' : ''}" style="left:${pct(r.first_head_offset)}%" title="head event +${r.first_head_offset.toFixed(3)}s"></div>`;
+      }
+      if (r.since_slot_start != null) {
+        h += `<div class="fill" style="width:${pct(r.since_slot_start)}%"></div>`;
+        h += `<div class="attest" style="left:${pct(r.since_slot_start)}%" title="attested +${r.since_slot_start.toFixed(3)}s"></div>`;
+      }
+      return `<div class="stripwrap"><div class="strip">${h}</div></div>`;
+    }
+
+    function detail(r) {
+      const R = REASONS[r.reason];
+      const rows = [
+        ['reason', R.label],
+        ['slot', r.slot != null ? slotLink(r.slot) : '-'],
+        ['slot time', r.slot != null ? slotTime(r.slot) : '-'],
+        ['epoch', r.epoch],
+        ['validator', pubkeyCell(r.pubkey)],
+        ['voted head', r.voted_head || '-'],
+        ['since slot start', r.since_slot_start != null ? r.since_slot_start.toFixed(3) + 's' : '-'],
+        ['first head event', r.first_head_offset != null ? '+' + r.first_head_offset.toFixed(3) + 's' : 'none logged'],
+        ['head events (slot)', r.head_events_count],
+        ['block N present', r.block_present == null ? '-' : (r.block_present ? 'yes' : 'MISSED')],
+        ['next slot (N+1)', r.next_slot_missed == null ? '-' : (r.next_slot_missed ? 'MISSED' : 'present')],
+        ['source / target / head', `${r.source_ok ? 'ok' : 'WRONG'} / ${r.target_ok ? 'ok' : 'WRONG'} / ${r.head_ok ? 'ok' : 'WRONG'}`],
+      ];
+      return `<div class="detail-inner">
+    <div class="dnote"><div class="why">what happened</div>${r.detail}</div>
+    <dl class="kv">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+  </div>`;
+    }
+
+    /* histogram: one bucket per slot-in-epoch, bars stacked by reason colour.
+       Respects the active chip filters and the exclude-unavoidable toggle. */
+    const SLOTS_PER_EPOCH = 32;
+    const histEl = document.getElementById('histogram');
+    const histYEl = document.getElementById('histyaxis');
+    const histGEl = document.getElementById('histgrid');
+    /* smallest "nice" step (1/2/5 x 10^n, min 1) that gives ~4 ticks */
+    function niceStep(range, ticks) {
+      const raw = range / ticks;
+      const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+      const n = raw / pow;
+      const s = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+      return Math.max(1, s * pow);
+    }
+    function renderHistogram() {
+      const buckets = Array.from({ length: SLOTS_PER_EPOCH }, () => ({}));
+      recs.forEach(r => {
+        if (r.slot_in_epoch == null || !active.has(r.reason)) return;
+        if (excluded && r.reason === 'next_slot_missed') return;
+        const b = buckets[r.slot_in_epoch];
+        b[r.reason] = (b[r.reason] || 0) + 1;
+      });
+      const totals = buckets.map(b => Object.values(b).reduce((a, c) => a + c, 0));
+      const max = Math.max(1, ...totals);
+      const step = niceStep(max, 4);
+      const axisMax = Math.ceil(max / step) * step;
+
+      /* y-axis ticks + gridlines */
+      histYEl.innerHTML = '';
+      histGEl.innerHTML = '';
+      for (let v = 0; v <= axisMax + 1e-9; v += step) {
+        const pos = (100 * v / axisMax) + '%';
+        const t = document.createElement('div');
+        t.className = 'ytick'; t.style.bottom = pos; t.textContent = v;
+        histYEl.appendChild(t);
+        const g = document.createElement('div');
+        g.className = 'gline'; g.style.bottom = pos;
+        histGEl.appendChild(g);
+      }
+
+      const frag = document.createDocumentFragment();
+      buckets.forEach((b, i) => {
+        const total = totals[i];
+        const col = document.createElement('div');
+        col.className = 'hcol';
+        col.dataset.slot = i;
+        const bar = document.createElement('div');
+        bar.className = 'hbar';
+        bar.style.height = (100 * total / axisMax) + '%';
+        ORDER.forEach(k => {
+          if (!b[k]) return;
+          const seg = document.createElement('div');
+          seg.className = 'hseg';
+          seg.style.background = REASONS[k].hex;
+          seg.style.height = (100 * b[k] / total) + '%';
+          seg.title = `slot ${i} · ${REASONS[k].label}: ${b[k]}`;
+          bar.appendChild(seg);
+        });
+        if (total) {
+          const cnt = document.createElement('div');
+          cnt.className = 'hcount';
+          cnt.textContent = total;
+          bar.appendChild(cnt);
+        }
+        col.appendChild(bar);
+        frag.appendChild(col);
+      });
+      histEl.innerHTML = '';
+      histEl.appendChild(frag);
+    }
+
+    /* histogram colour legend (static, ordered like the reason breakdown) */
+    const histLegendEl = document.getElementById('histlegend');
+    ORDER.forEach(k => {
+      const R = REASONS[k];
+      const span = document.createElement('span');
+      span.innerHTML = `<i style="background:${R.hex}"></i>${R.label}`;
+      histLegendEl.appendChild(span);
+    });
+
+    function render() {
+      renderHistogram();
+      const q = searchEl.value.trim().toLowerCase();
+      let rows = recs.filter(r => active.has(r.reason));
+      if (q) rows = rows.filter(r => ('' + r.slot).includes(q) || ('' + r.epoch).includes(q) || (r.pubkey || '').toLowerCase().includes(q));
+      rows.sort((a, b) => {
+        let x = a[sortKey], y = b[sortKey];
+        if (sortKey === 'reason') { x = ORDER.indexOf(a.reason); y = ORDER.indexOf(b.reason); }
+        x = x == null ? -1 : x; y = y == null ? -1 : y;
+        if (x !== y) return (x < y ? -1 : 1) * sortDir;
+        // tie-break by slot ascending (keeps rows within an epoch in slot order)
+        const sa = a.slot == null ? -1 : a.slot, sb = b.slot == null ? -1 : b.slot;
+        return sa < sb ? -1 : sa > sb ? 1 : 0;
+      });
+      countEl.textContent = rows.length.toLocaleString() + ' of ' + total.toLocaleString() + ' shown';
+      if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty">No attestations match these filters.</div></td></tr>'; return; }
+      const frag = document.createDocumentFragment();
+      rows.forEach((r, i) => {
+        const R = REASONS[r.reason];
+        const tr = document.createElement('tr'); tr.className = 'row';
+        tr.innerHTML = `
+      <td class="mono">${r.epoch}</td>
+      <td class="slotcell">${r.slot != null ? slotLink(r.slot) : '-'}${r.slot_in_epoch != null ? ` <span class="epoch">(${r.slot_in_epoch}${r.slot_in_period != null ? ` - ${r.slot_in_period}` : ''})</span>` : ''}<div class="stime">${r.slot != null ? slotTime(r.slot) : ''}</div></td>
+      <td class="hide-sm mono" style="color:var(--muted)">${pubkeyCell(r.pubkey)}</td>
+      <td><span class="flags">${flag('S', r.source_ok)}${flag('T', r.target_ok)}${flag('H', r.head_ok)}</span></td>
+      <td>${strip(r)}</td>
+      <td><span class="rpill" style="--c:${R.hex}">${R.label}</span></td>`;
+        const dtr = document.createElement('tr'); dtr.className = 'detail'; dtr.style.display = 'none';
+        let built = false;
+        tr.onclick = () => {
+          if (!built) { dtr.innerHTML = `<td colspan="6">${detail(r)}</td>`; built = true; }
+          dtr.style.display = dtr.style.display === 'none' ? '' : 'none';
+        };
+        frag.appendChild(tr); frag.appendChild(dtr);
+      });
+      tbody.innerHTML = ''; tbody.appendChild(frag);
+    }
+
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      const key = th.dataset.sort;
+      const go = () => {
+        if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+        document.querySelectorAll('th .ar').forEach(a => a.textContent = '');
+        th.querySelector('.ar').textContent = sortDir > 0 ? '↑' : '↓'; render();
+      };
+      th.onclick = go;
+      th.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+    });
+    searchEl.addEventListener('input', render);
+    document.querySelector('th[data-sort="epoch"] .ar').textContent = '↑';
+    render();
+
+    /* ── flawless run ────────────────────────────────────────────────────
+       Every imperfect attestation, if any, was next-slot-missed: nothing the
+       client could have done differently. That earns fireworks. */
+    const flawless = DATA.stats.total_attestations > 0 &&
+      recs.every(r => r.reason === 'next_slot_missed');
+    if (flawless) fireworks();
+
+    function fireworks() {
+      const cv = document.getElementById('fireworks');
+      const ctx = cv.getContext('2d');
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const fit = () => {
+        cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      };
+      fit(); addEventListener('resize', fit);
+
+      const HUES = ['#4bd6a0', '#35c2b0', '#5aa9f0', '#ecc94b', '#f5893d', '#9b8cff', '#eaf1fa'];
+      const GRAV = 0.055, DRAG = 0.988;
+      const SHELLS = 300; /* frames of launching, ≈5s at 60fps */
+      const rockets = [], sparks = [];
+
+      function launch() {
+        rockets.push({
+          x: innerWidth * (0.12 + 0.76 * Math.random()), y: innerHeight + 8,
+          vx: (Math.random() - .5) * 1.3,
+          vy: -(7.4 + Math.random() * 2.8),
+          hue: HUES[(Math.random() * HUES.length) | 0],
+          fuse: 44 + Math.random() * 28, age: 0,
+        });
+      }
+
+      function burst(r) {
+        const n = 54 + ((Math.random() * 36) | 0);
+        const reach = 3.0 + Math.random() * 2.0;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2 + Math.random() * .2;
+          const s = reach * (.35 + Math.random() * .8);
+          sparks.push({
+            x: r.x, y: r.y,
+            vx: Math.cos(a) * s + r.vx * .4,
+            vy: Math.sin(a) * s + r.vy * .12,
+            hue: Math.random() < .16 ? '#ffffff' : r.hue,
+            life: 60 + Math.random() * 46, age: 0,
+            size: .9 + Math.random() * 1.5,
+          });
+        }
+      }
+
+      let frame = 0, nextLaunch = 4;
+      function tick() {
+        frame++;
+        /* fade the previous frame instead of clearing it: leaves comet trails
+           without painting a backdrop over the report */
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,.16)';
+        ctx.fillRect(0, 0, innerWidth, innerHeight);
+        ctx.globalCompositeOperation = 'lighter';
+
+        if (frame < SHELLS && frame >= nextLaunch) {
+          launch();
+          if (frame > SHELLS - 72) { launch(); launch(); } /* finale */
+          nextLaunch = frame + 16 + ((Math.random() * 22) | 0);
+        }
+
+        for (let i = rockets.length - 1; i >= 0; i--) {
+          const r = rockets[i];
+          r.age++; r.x += r.vx; r.y += r.vy; r.vy += GRAV * 2.2;
+          ctx.fillStyle = r.hue;
+          ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.arc(r.x, r.y, 1.9, 0, 7); ctx.fill();
+          ctx.globalAlpha = .3;
+          ctx.fillRect(r.x - .7, r.y, 1.4, 8);
+          if (r.age > r.fuse || r.vy > -1.2) { burst(r); rockets.splice(i, 1); }
+        }
+
+        for (let i = sparks.length - 1; i >= 0; i--) {
+          const p = sparks[i];
+          p.age++;
+          const t = p.age / p.life;
+          if (t >= 1) { sparks.splice(i, 1); continue; }
+          p.vx *= DRAG; p.vy = p.vy * DRAG + GRAV;
+          p.x += p.vx; p.y += p.vy;
+          ctx.globalAlpha = (1 - t) * (1 - t);
+          ctx.fillStyle = p.hue;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 7); ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
+        if (frame < SHELLS || rockets.length || sparks.length) requestAnimationFrame(tick);
+        else { removeEventListener('resize', fit); ctx.globalCompositeOperation = 'source-over'; cv.remove(); }
+      }
+      requestAnimationFrame(tick);
+    }
+  </script>
+</body>
+
+</html>
